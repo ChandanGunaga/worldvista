@@ -1,0 +1,63 @@
+# One-command production stack for a VPS (DigitalOcean, Lightsail, Hetzner…):
+#   cp .env.example .env   # fill in values
+#   docker compose up -d --build
+#   docker compose exec api npx tsx prisma/seed.ts   # first time only
+# Caddy obtains and renews HTTPS certificates automatically for $DOMAIN.
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: worldvista
+      POSTGRES_USER: worldvista
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U worldvista -d worldvista"]
+      interval: 5s
+      retries: 10
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://worldvista:${POSTGRES_PASSWORD}@db:5432/worldvista?schema=public
+      NODE_ENV: production
+      PORT: 4000
+      FRONTEND_URL: https://${DOMAIN}
+      TRUST_PROXY: 2
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        API_URL: http://api:4000
+    restart: unless-stopped
+    depends_on:
+      - api
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      - web
+
+volumes:
+  pgdata:
+  uploads:
+  caddy_data:
