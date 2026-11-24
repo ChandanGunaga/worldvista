@@ -15,37 +15,45 @@ export function Field({ label, children, hint, className }: { label: string; chi
 export function Alert({ kind = "error", children }: { kind?: "error" | "success" | "info" | "warning"; children: ReactNode }) {
   if (!children) return null;
   const styles = {
-    error: "border-red-200 bg-red-50 text-red-800",
-    success: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    info: "border-navy-100 bg-navy-50 text-navy-800",
-    warning: "border-gold-300 bg-gold-50 text-gold-700",
+    error: "border-red-400/30 bg-red-500/10 text-red-200",
+    success: "border-emerald-400/30 bg-emerald-500/10 text-emerald-200",
+    info: "border-sky-400/25 bg-sky-500/10 text-sky-200",
+    warning: "border-gold-400/40 bg-gold-400/10 text-gold-200",
   }[kind];
   return <div role={kind === "error" ? "alert" : "status"} className={clsx("rounded-xl border px-4 py-3 text-sm", styles)}>{children}</div>;
 }
 
 const badgeColors: Record<string, string> = {
-  ACTIVE: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  ENROLLED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  CONFIRMED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  RESOLVED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  COMPLETED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  NEW: "bg-sky-50 text-sky-700 ring-sky-200",
-  OPEN: "bg-sky-50 text-sky-700 ring-sky-200",
-  REQUESTED: "bg-sky-50 text-sky-700 ring-sky-200",
-  CONTACTED: "bg-indigo-50 text-indigo-700 ring-indigo-200",
-  IN_PROGRESS: "bg-indigo-50 text-indigo-700 ring-indigo-200",
-  PENDING_VERIFICATION: "bg-amber-50 text-amber-700 ring-amber-200",
-  PENDING_OWNER_APPROVAL: "bg-amber-50 text-amber-700 ring-amber-200",
-  PENDING_LEGAL_REVIEW: "bg-orange-50 text-orange-700 ring-orange-200",
-  SUSPENDED: "bg-red-50 text-red-700 ring-red-200",
-  CANCELLED: "bg-slate-100 text-slate-600 ring-slate-200",
-  CLOSED: "bg-slate-100 text-slate-600 ring-slate-200",
-  WITHDRAWN: "bg-slate-100 text-slate-600 ring-slate-200",
+  ACTIVE: "bg-emerald-400/10 text-emerald-300 ring-emerald-400/30",
+  ENROLLED: "bg-emerald-400/10 text-emerald-300 ring-emerald-400/30",
+  CONFIRMED: "bg-emerald-400/10 text-emerald-300 ring-emerald-400/30",
+  RESOLVED: "bg-emerald-400/10 text-emerald-300 ring-emerald-400/30",
+  COMPLETED: "bg-emerald-400/10 text-emerald-300 ring-emerald-400/30",
+  NEW: "bg-sky-400/10 text-sky-300 ring-sky-400/30",
+  OPEN: "bg-sky-400/10 text-sky-300 ring-sky-400/30",
+  REQUESTED: "bg-sky-400/10 text-sky-300 ring-sky-400/30",
+  CONTACTED: "bg-indigo-400/10 text-indigo-300 ring-indigo-400/30",
+  IN_PROGRESS: "bg-indigo-400/10 text-indigo-300 ring-indigo-400/30",
+  PENDING_VERIFICATION: "bg-amber-400/10 text-amber-300 ring-amber-400/30",
+  PENDING_OWNER_APPROVAL: "bg-amber-400/10 text-amber-300 ring-amber-400/30",
+  PENDING_LEGAL_REVIEW: "bg-orange-400/10 text-orange-300 ring-orange-400/30",
+  SUSPENDED: "bg-red-400/10 text-red-300 ring-red-400/30",
+  CANCELLED: "bg-white/5 text-white/50 ring-white/15",
+  CLOSED: "bg-white/5 text-white/50 ring-white/15",
+  PAID: "bg-emerald-400/10 text-emerald-300 ring-emerald-400/30",
+  APPROVED: "bg-emerald-400/10 text-emerald-300 ring-emerald-400/30",
+  PENDING: "bg-amber-400/10 text-amber-300 ring-amber-400/30",
+  PENDING_APPROVAL: "bg-amber-400/10 text-amber-300 ring-amber-400/30",
+  CREATED: "bg-sky-400/10 text-sky-300 ring-sky-400/30",
+  FAILED: "bg-red-400/10 text-red-300 ring-red-400/30",
+  VOIDED: "bg-white/5 text-white/50 ring-white/15",
+  REFUNDED: "bg-white/5 text-white/50 ring-white/15",
+  WITHDRAWN: "bg-white/5 text-white/50 ring-white/15",
 };
 
 export function Badge({ value, className }: { value: string; className?: string }) {
   return (
-    <span className={clsx("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset", badgeColors[value] ?? "bg-slate-100 text-slate-700 ring-slate-200", className)}>
+    <span className={clsx("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset", badgeColors[value] ?? "bg-white/5 text-white/50 ring-white/15", className)}>
       {value.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase())}
     </span>
   );
@@ -55,8 +63,9 @@ export function PageHeader({ title, subtitle, action }: { title: string; subtitl
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="text-2xl text-navy-950 sm:text-3xl">{title}</h1>
-        {subtitle && <p className="mt-1 text-sm text-slate-500">{subtitle}</p>}
+        <h1 className="font-serif text-3xl text-white sm:text-4xl">{title}</h1>
+        <div className="mt-3 h-[2px] w-16 rounded-full bg-gold-grad" />
+        {subtitle && <p className="mt-3 text-sm text-white/50">{subtitle}</p>}
       </div>
       {action}
     </div>
@@ -65,20 +74,20 @@ export function PageHeader({ title, subtitle, action }: { title: string; subtitl
 
 export function StatCard({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) {
   return (
-    <div className="card p-5">
-      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="mt-2 font-serif text-3xl text-navy-950">{value}</div>
-      {hint && <div className="mt-1 text-xs text-slate-500">{hint}</div>}
+    <div className="stat-tile">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">{label}</div>
+      <div className="mt-2 font-serif text-3xl text-gold-grad">{value}</div>
+      {hint && <div className="mt-1 text-xs text-white/40">{hint}</div>}
     </div>
   );
 }
 
 export function Empty({ children }: { children: ReactNode }) {
-  return <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 px-6 py-10 text-center text-sm text-slate-500">{children}</div>;
+  return <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-6 py-10 text-center text-sm text-white/45">{children}</div>;
 }
 
 export function Spinner() {
-  return <div className="py-10 text-center text-sm text-slate-500">Loading…</div>;
+  return <div className="flex items-center justify-center gap-3 py-12 text-sm text-white/45"><span className="h-4 w-4 animate-spin rounded-full border-2 border-gold-400/30 border-t-gold-400" />Loading…</div>;
 }
 
 export function CopyButton({ text }: { text: string }) {
@@ -101,14 +110,19 @@ export function CopyButton({ text }: { text: string }) {
 export function Modal({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: ReactNode }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-navy-950/50 p-4 sm:items-center" onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-label={title} className="card my-8 w-full max-w-2xl p-6" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm sm:items-center" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-label={title} className="lux-card-gold my-8 w-full max-w-2xl p-6" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl text-navy-950">{title}</h2>
-          <button onClick={onClose} className="rounded-full p-1 text-slate-500 hover:bg-slate-100" aria-label="Close">✕</button>
+          <h2 className="font-serif text-2xl text-white">{title}</h2>
+          <button onClick={onClose} className="rounded-full p-1 text-white/50 hover:bg-white/10 hover:text-white" aria-label="Close">✕</button>
         </div>
         {children}
       </div>
     </div>
   );
+}
+
+/** Numbered section label in the portal, e.g. <SecNo n={1}>Overview</SecNo> */
+export function SecNo({ n, children }: { n: number; children: ReactNode }) {
+  return <div className="sec-no mb-4"><span>{String(n).padStart(2, "0")}</span><span className="text-white/50">{children}</span></div>;
 }

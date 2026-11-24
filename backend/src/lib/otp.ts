@@ -13,6 +13,7 @@ const subjects: Record<OtpPurpose, string> = {
   VERIFY_EMAIL: "Verify your World Vista email",
   RESET_PASSWORD: "Reset your World Vista password",
   CHANGE_EMAIL: "Confirm your new World Vista email",
+  CHANGE_WALLET: "Confirm your new withdrawal address",
   ADMIN_LOGIN: "World Vista admin sign-in code",
 };
 

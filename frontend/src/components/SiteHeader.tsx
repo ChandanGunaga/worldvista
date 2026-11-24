@@ -2,27 +2,42 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import clsx from "clsx";
 
 const NAV = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About" },
-  { href: "/tours", label: "Tour Packages" },
-  { href: "/education", label: "Education" },
-  { href: "/ai-markets", label: "AI & Markets" },
-  { href: "/faq", label: "FAQs" },
+  { href: "/tours", label: "Journeys" },
+  { href: "/education", label: "Academy" },
+  { href: "/ai-markets", label: "Insights" },
+  { href: "/faq", label: "FAQ" },
   { href: "/contact", label: "Contact" },
 ];
 
 export function SiteHeader() {
   const path = usePathname();
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const on = () => setScrolled(window.scrollY > 24);
+    on();
+    window.addEventListener("scroll", on, { passive: true });
+    return () => window.removeEventListener("scroll", on);
+  }, []);
+  useEffect(() => setOpen(false), [path]);
+  const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
+
   return (
-    <header className="sticky top-0 z-40 bg-navy-900/95 backdrop-blur">
-      <div className="container-x flex h-16 items-center justify-between">
-        <Link href="/" className="flex items-center" aria-label="World Vista home">
-          <Image src="/logo.png" alt="World Vista" width={168} height={56} priority className="h-11 w-auto" />
+    <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-6 sm:pt-5">
+      <div
+        className={clsx(
+          "mx-auto flex h-16 max-w-7xl items-center justify-between rounded-full border px-4 transition-all duration-500 sm:h-[72px] sm:px-6",
+          scrolled ? "border-white/10 bg-onyx-850/85 shadow-[0_20px_50px_-20px_rgba(0,0,0,.8)] backdrop-blur-xl" : "border-white/[0.06] bg-onyx-850/50 backdrop-blur-md",
+        )}
+      >
+        <Link href="/" className="flex shrink-0 items-center" aria-label="World Vista home">
+          <Image src="/images/logo-gold-t.png" alt="World Vista" width={900} height={439} priority className="h-10 w-auto sm:h-11" />
         </Link>
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Main">
           {NAV.map((n) => (
@@ -30,32 +45,31 @@ export function SiteHeader() {
               key={n.href}
               href={n.href}
               className={clsx(
-                "rounded-full px-3 py-2 text-sm font-medium transition",
-                path === n.href ? "text-gold-400" : "text-white/80 hover:text-white",
+                "relative px-3.5 py-2 text-[13px] font-bold uppercase tracking-[0.08em] transition-colors xl:px-4",
+                active(n.href) ? "text-gold-300" : "text-white/85 hover:text-gold-200",
               )}
             >
+              {active(n.href) && <span className="absolute -top-[14px] left-1/2 h-[3px] w-7 -translate-x-1/2 rounded-full bg-gold-grad sm:-top-[18px]" />}
               {n.label}
             </Link>
           ))}
         </nav>
-        <div className="hidden items-center gap-2 lg:flex">
-          <Link href="/login" className="btn-ghost-light btn-sm">Member Login</Link>
-          <Link href="/tours#enquire" className="btn-gold btn-sm">Plan a Trip</Link>
+        <div className="hidden items-center gap-3 lg:flex">
+          <Link href="/tours#enquire" className="text-[13px] font-bold uppercase tracking-[0.08em] text-white/80 transition hover:text-gold-200">Plan a trip</Link>
+          <Link href="/login" className="btn-lux py-2.5 text-[13px] uppercase tracking-[0.08em]">Login</Link>
         </div>
-        <button className="rounded-lg p-2 text-white lg:hidden" onClick={() => setOpen(!open)} aria-expanded={open} aria-label="Toggle menu">
-          <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><path d={open ? "M6 6l12 12M18 6L6 18" : "M4 7h16M4 12h16M4 17h16"} /></svg>
+        <button className="rounded-full p-2 text-gold-200 lg:hidden" onClick={() => setOpen(!open)} aria-expanded={open} aria-label="Toggle menu">
+          <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d={open ? "M6 6l12 12M18 6L6 18" : "M4 7h16M8 12h12M4 17h16"} /></svg>
         </button>
       </div>
-      {open && (
-        <nav className="border-t border-white/10 bg-navy-900 lg:hidden" aria-label="Mobile">
-          <div className="container-x flex flex-col py-3">
-            {NAV.map((n) => (
-              <Link key={n.href} href={n.href} onClick={() => setOpen(false)} className="py-2.5 text-white/90">{n.label}</Link>
-            ))}
-            <Link href="/login" onClick={() => setOpen(false)} className="btn-gold mt-3">Member Login</Link>
-          </div>
+      <div className={clsx("mx-auto mt-2 max-w-7xl overflow-hidden rounded-3xl border border-white/10 bg-onyx-850/95 backdrop-blur-xl transition-all duration-500 lg:hidden", open ? "max-h-[520px] opacity-100" : "max-h-0 border-transparent opacity-0")}>
+        <nav className="flex flex-col p-4" aria-label="Mobile">
+          {NAV.map((n) => (
+            <Link key={n.href} href={n.href} className={clsx("rounded-xl px-3 py-3 text-sm font-bold uppercase tracking-[0.08em]", active(n.href) ? "bg-gold-400/10 text-gold-300" : "text-white/85")}>{n.label}</Link>
+          ))}
+          <Link href="/login" className="btn-lux mt-3">Member login</Link>
         </nav>
-      )}
+      </div>
     </header>
   );
 }

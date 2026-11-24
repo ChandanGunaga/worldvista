@@ -4,50 +4,61 @@ import { serverApi } from "@/lib/api";
 
 type Contact = { email?: string; phone?: string; address?: string; hours?: string };
 
+const EXPLORE = [
+  { href: "/", label: "Home" },
+  { href: "/about", label: "About" },
+  { href: "/tours", label: "Journeys" },
+  { href: "/education", label: "Academy" },
+  { href: "/ai-markets", label: "Insights" },
+  { href: "/faq", label: "FAQ" },
+  { href: "/contact", label: "Contact" },
+];
+const POLICIES = [
+  { href: "/legal/terms", label: "Terms & Conditions" },
+  { href: "/legal/privacy", label: "Privacy Policy" },
+  { href: "/legal/refund-policy", label: "Cancellation & Refunds" },
+  { href: "/legal/disclaimer", label: "Disclaimer" },
+  { href: "/legal/grievance", label: "Grievance Redressal" },
+];
+
 export async function SiteFooter() {
   const data = await serverApi<{ settings: { contact?: Contact } }>("/public/settings");
   const c = data?.settings.contact ?? {};
   return (
-    <footer className="bg-navy-950 text-white/70">
-      <div className="container-x grid gap-10 py-14 md:grid-cols-4">
-        <div className="md:col-span-1">
-          <Image src="/logo.png" alt="World Vista" width={180} height={60} className="h-12 w-auto" />
-          <p className="mt-4 font-serif text-lg italic text-white">&ldquo;More Meaningful Life&rdquo;</p>
-          <p className="mt-1 text-xs font-semibold tracking-[0.2em] text-gold-400">TRAVEL • LEARN • EXPERIENCE</p>
-        </div>
+    <footer className="relative overflow-hidden border-t border-white/[0.06] bg-onyx-950 text-white/60">
+      <div className="pointer-events-none absolute -left-40 top-0 h-[420px] w-[420px] rounded-full bg-gold-500/10 blur-[120px]" />
+      <div className="container-x relative grid gap-12 py-20 lg:grid-cols-[1.1fr_1px_1.4fr]">
         <div>
-          <h3 className="mb-3 font-sans text-sm font-semibold text-white">Explore</h3>
-          <ul className="space-y-2 text-sm">
-            <li><Link href="/tours" className="hover:text-white">Tour Packages</Link></li>
-            <li><Link href="/education" className="hover:text-white">Financial Markets Education</Link></li>
-            <li><Link href="/ai-markets" className="hover:text-white">AI & Financial Markets</Link></li>
-            <li><Link href="/about" className="hover:text-white">About World Vista</Link></li>
-          </ul>
+          <Image src="/images/logo-gold-t.png" alt="World Vista" width={900} height={439} className="h-28 w-auto" />
+          <p className="mt-6 font-serif text-2xl italic text-champagne">&ldquo;A More Meaningful Life&rdquo;</p>
+          <p className="mt-2 text-[11px] font-bold tracking-[0.32em] text-gold-300">TRAVEL • LEARN • EXPERIENCE</p>
+          <Link href="/register" className="btn-lux mt-8">Become a member</Link>
         </div>
-        <div>
-          <h3 className="mb-3 font-sans text-sm font-semibold text-white">Policies</h3>
-          <ul className="space-y-2 text-sm">
-            <li><Link href="/legal/terms" className="hover:text-white">Terms & Conditions</Link></li>
-            <li><Link href="/legal/privacy" className="hover:text-white">Privacy Policy</Link></li>
-            <li><Link href="/legal/refund-policy" className="hover:text-white">Cancellation & Refunds</Link></li>
-            <li><Link href="/legal/disclaimer" className="hover:text-white">Disclaimer</Link></li>
-            <li><Link href="/legal/grievance" className="hover:text-white">Grievance Redressal</Link></li>
-          </ul>
-        </div>
-        <div>
-          <h3 className="mb-3 font-sans text-sm font-semibold text-white">Contact</h3>
-          <ul className="space-y-2 text-sm">
-            {c.email && <li><a href={`mailto:${c.email}`} className="hover:text-white">{c.email}</a></li>}
-            {c.phone && <li>{c.phone}</li>}
-            {c.address && <li>{c.address}</li>}
-            {c.hours && <li className="text-white/50">{c.hours}</li>}
-          </ul>
+        <div className="hidden bg-white/10 lg:block" />
+        <div className="grid gap-10 sm:grid-cols-3">
+          <div>
+            <h3 className="mb-4 font-sans text-sm font-bold uppercase tracking-[0.14em] text-white">Navigation</h3>
+            <ul className="space-y-2.5 text-sm">{EXPLORE.map((l) => <li key={l.href}><Link href={l.href} className="transition hover:text-gold-200">{l.label}</Link></li>)}</ul>
+          </div>
+          <div>
+            <h3 className="mb-4 font-sans text-sm font-bold uppercase tracking-[0.14em] text-white">Policies</h3>
+            <ul className="space-y-2.5 text-sm">{POLICIES.map((l) => <li key={l.href}><Link href={l.href} className="transition hover:text-gold-200">{l.label}</Link></li>)}</ul>
+          </div>
+          <div>
+            <h3 className="mb-4 font-sans text-sm font-bold uppercase tracking-[0.14em] text-white">Contact</h3>
+            <ul className="space-y-2.5 text-sm">
+              {c.email && <li><a href={`mailto:${c.email}`} className="transition hover:text-gold-200">{c.email}</a></li>}
+              {c.phone && <li>{c.phone}</li>}
+              {c.address && <li>{c.address}</li>}
+              {c.hours && <li className="text-white/40">{c.hours}</li>}
+            </ul>
+          </div>
         </div>
       </div>
-      <div className="border-t border-white/10">
-        <div className="container-x flex flex-col gap-2 py-6 text-xs text-white/50 md:flex-row md:justify-between">
-          <p>© {new Date().getFullYear()} World Vista. All rights reserved.</p>
-          <p className="max-w-2xl md:text-right">Tour prices exclude service charges. Education content is for educational purposes only and is not financial advice; trading involves risk.</p>
+      <div className="border-t border-white/[0.06]">
+        <div className="container-x flex flex-col gap-2 py-6 text-xs text-white/40 md:flex-row md:justify-between">
+          <p>© {new Date().getFullYear()} <span className="text-gold-300">World Vista</span>. All rights reserved.</p>
+          <p className="max-w-2xl md:text-right">Tour prices exclude service charges. Education content is for learning only and is not financial advice; trading involves risk.</p>
         </div>
       </div>
     </footer>

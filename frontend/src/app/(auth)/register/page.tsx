@@ -37,7 +37,7 @@ export default function Register() {
   return (
     <form onSubmit={submit} className="space-y-4">
       <div>
-        <h1 className="text-3xl text-navy-950">Create your account</h1>
+        <h1 className="font-serif text-3xl text-white">Create your account</h1>
         <p className="mt-1 text-sm text-slate-500">Join World Vista to manage trips, courses and support.</p>
       </div>
       <Field label="Full name"><input className="input" required autoComplete="name" value={f.fullName} onChange={set("fullName")} /></Field>
@@ -56,11 +56,11 @@ export default function Register() {
         )}
       </div>
       <label className="flex items-start gap-3 text-sm text-slate-600">
-        <input type="checkbox" className="mt-1 h-4 w-4 accent-navy-900" checked={f.consent} onChange={set("consent")} required />
+        <input type="checkbox" className="mt-1 h-4 w-4 accent-gold-400" checked={f.consent} onChange={set("consent")} required />
         <span>I agree to the <Link href="/legal/terms" target="_blank" className="underline">Terms & Conditions</Link> and <Link href="/legal/privacy" target="_blank" className="underline">Privacy Policy</Link>, and I have read the <Link href="/legal/disclaimer" target="_blank" className="underline">Disclaimer</Link>.</span>
       </label>
       <Alert>{error}</Alert>
-      <button className="btn-navy w-full" disabled={busy}>{busy ? "Creating account…" : "Create account"}</button>
+      <button className="btn-lux w-full" disabled={busy}>{busy ? "Creating account…" : "Create account"}</button>
       <p className="text-center text-sm text-slate-600">Already a member? <Link href="/login" className="font-semibold text-navy-700 underline">Sign in</Link></p>
     </form>
   );

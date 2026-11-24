@@ -51,8 +51,11 @@ export function EnquiryForm({
   }
 
   return (
-    <form onSubmit={submit} className="card space-y-4 p-6">
-      <h3 className="text-xl text-navy-950">{title}</h3>
+    <form onSubmit={submit} className="lux-card-gold space-y-5 p-7 sm:p-10">
+      <div>
+        <span className="chip">Enquiry</span>
+        <h3 className="mt-4 font-serif text-3xl text-white">{title}</h3>
+      </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Full name"><input className="input" required value={form.name} onChange={set("name")} autoComplete="name" /></Field>
         <Field label="Email"><input className="input" type="email" required value={form.email} onChange={set("email")} autoComplete="email" /></Field>
@@ -74,7 +77,7 @@ export function EnquiryForm({
       {/* Honeypot: hidden from humans */}
       <input type="text" name="website" value={form.website} onChange={set("website")} className="hidden" tabIndex={-1} autoComplete="off" aria-hidden />
       {status && <Alert kind={status.kind}>{status.msg}</Alert>}
-      <button className="btn-gold w-full sm:w-auto" disabled={busy}>{busy ? "Sending…" : "Send enquiry"}</button>
+      <button className="btn-lux w-full sm:w-auto" disabled={busy}>{busy ? "Sending…" : "Send enquiry"}</button>
       <p className="text-xs text-slate-500">Prices exclude service charges. Availability, hotels and itinerary are confirmed in writing before booking.</p>
     </form>
   );

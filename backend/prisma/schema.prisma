@@ -31,6 +31,7 @@ enum OtpPurpose {
   RESET_PASSWORD
   CHANGE_EMAIL
   ADMIN_LOGIN
+  CHANGE_WALLET
 }
 
 model User {
@@ -72,6 +73,18 @@ model User {
   notifications Notification[]
   auditLogs     AuditLog[]
   payments      Payment[]
+  credits       UsdCredit[]         @relation("CreditMember")
+  creditLedger  CreditLedgerEntry[] @relation("LedgerMember")
+  activations   PackageActivation[]
+
+  /// USDT (BEP20) payout address; changes need email OTP and start a security hold
+  walletAddress    String?
+  walletChangedAt  DateTime?
+  incomeLedger     IncomeEntry[]     @relation("IncomeMember")
+  volumeEntries    VolumeEntry[]     @relation("VolumeBeneficiary")
+  binaryWeeks      BinaryWeek[]
+  rankAchievements RankAchievement[]
+  withdrawals      Withdrawal[]
 
   @@unique([placementParentId, placementSide])
   @@index([sponsorId])
@@ -94,32 +107,39 @@ model Otp {
 }
 
 model TourPackage {
-  id            String    @id @default(cuid())
-  slug          String    @unique
-  name          String
-  destination   String
-  price         Decimal   @db.Decimal(12, 2)
-  currency      String    @default("USD")
-  chargeNote    String    @default("+ service charge")
-  nights        Int
-  days          Int
-  summary       String
-  description   String    @default("")
-  hotelCategory String
-  tag           String?
-  validityDays  Int?      @default(90)
-  inclusions    String[]
-  exclusions    String[]
-  imageUrl      String?
-  availableFrom DateTime?
-  availableTo   DateTime?
-  cancellationPolicy String @default("")
-  active        Boolean   @default(true)
-  verified      Boolean   @default(false)
-  sortOrder     Int       @default(0)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  enquiries     Enquiry[]
+  id                 String              @id @default(cuid())
+  slug               String              @unique
+  name               String
+  destination        String
+  price              Decimal             @db.Decimal(12, 2)
+  currency           String              @default("USD")
+  chargeNote         String              @default("+ service charge")
+  nights             Int
+  days               Int
+  summary            String
+  description        String              @default("")
+  hotelCategory      String
+  tag                String?
+  validityDays       Int?                @default(90)
+  inclusions         String[]
+  exclusions         String[]
+  imageUrl           String?
+  availableFrom      DateTime?
+  availableTo        DateTime?
+  cancellationPolicy String              @default("")
+  /// Day-by-day plan: [{ day, title, details }]
+  itinerary          Json                @default("[]")
+  /// Per-traveller service charge (USD). Shown separately from the package price.
+  serviceCharge      Decimal             @default(0) @db.Decimal(12, 2)
+  /// May be paid with USD Package Credit
+  creditEligible     Boolean             @default(true)
+  activations        PackageActivation[]
+  active             Boolean             @default(true)
+  verified           Boolean             @default(false)
+  sortOrder          Int                 @default(0)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  enquiries          Enquiry[]
 }
 
 enum EnquiryType {
@@ -137,50 +157,54 @@ enum EnquiryStatus {
 }
 
 model Enquiry {
-  id            String        @id @default(cuid())
-  reference     String        @unique
+  id            String             @id @default(cuid())
+  reference     String             @unique
   type          EnquiryType
   packageId     String?
-  package       TourPackage?  @relation(fields: [packageId], references: [id])
+  package       TourPackage?       @relation(fields: [packageId], references: [id])
   courseId      String?
-  course        Course?       @relation(fields: [courseId], references: [id])
+  course        Course?            @relation(fields: [courseId], references: [id])
   userId        String?
-  user          User?         @relation(fields: [userId], references: [id])
+  user          User?              @relation(fields: [userId], references: [id])
   name          String
   email         String
   phone         String?
   travellers    Int?
   preferredDate DateTime?
-  message       String        @default("")
-  status        EnquiryStatus @default(NEW)
-  adminNotes    String        @default("")
+  message       String             @default("")
+  status        EnquiryStatus      @default(NEW)
+  adminNotes    String             @default("")
   payments      Payment[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  activation    PackageActivation?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
 
   @@index([status])
 }
 
 model Course {
-  id              String       @id @default(cuid())
-  slug            String       @unique
-  title           String
-  tuition         Decimal      @db.Decimal(12, 2)
-  currency        String       @default("USD")
-  duration        String
-  schedule        String
-  topics          String[]
-  syllabus        String
-  trainer         String?
-  startDate       DateTime?
-  enrollmentOpen  Boolean      @default(true)
-  disclaimer      String
-  imageUrl        String?
-  active          Boolean      @default(true)
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  enrollments     Enrollment[]
-  enquiries       Enquiry[]
+  id             String              @id @default(cuid())
+  slug           String              @unique
+  title          String
+  tuition        Decimal             @db.Decimal(12, 2)
+  currency       String              @default("USD")
+  duration       String
+  schedule       String
+  topics         String[]
+  syllabus       String
+  trainer        String?
+  startDate      DateTime?
+  enrollmentOpen Boolean             @default(true)
+  disclaimer     String
+  imageUrl       String?
+  creditEligible Boolean             @default(true)
+  sessions       CourseSession[]
+  activations    PackageActivation[]
+  active         Boolean             @default(true)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  enrollments    Enrollment[]
+  enquiries      Enquiry[]
 }
 
 enum EnrollmentStatus {
@@ -191,15 +215,16 @@ enum EnrollmentStatus {
 }
 
 model Enrollment {
-  id        String           @id @default(cuid())
+  id        String            @id @default(cuid())
   userId    String
-  user      User             @relation(fields: [userId], references: [id])
+  user      User              @relation(fields: [userId], references: [id])
   courseId  String
-  course    Course           @relation(fields: [courseId], references: [id])
-  status    EnrollmentStatus @default(REQUESTED)
+  course    Course            @relation(fields: [courseId], references: [id])
+  status    EnrollmentStatus  @default(REQUESTED)
   payments  Payment[]
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  progress  SessionProgress[]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
 
   @@unique([userId, courseId])
 }
@@ -378,4 +403,300 @@ model Payment {
   updatedAt         DateTime       @updatedAt
 
   @@index([status])
+}
+
+/// One class in a course timetable. Live links are only shown to enrolled students.
+model CourseSession {
+  id           String            @id @default(cuid())
+  courseId     String
+  course       Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title        String
+  startsAt     DateTime
+  durationMins Int               @default(60)
+  instructor   String?
+  liveUrl      String?
+  recordingUrl String?
+  notes        String            @default("")
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  progress     SessionProgress[]
+
+  @@index([courseId, startsAt])
+}
+
+model SessionProgress {
+  id           String        @id @default(cuid())
+  enrollmentId String
+  enrollment   Enrollment    @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  sessionId    String
+  session      CourseSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  completedAt  DateTime      @default(now())
+
+  @@unique([enrollmentId, sessionId])
+}
+
+enum CreditStatus {
+  PENDING
+  APPROVED
+  VOIDED
+}
+
+/// USD Package Credit (spec §25). A closed-loop, non-withdrawable, non-transferable
+/// credit that can only be spent on World Vista's own tour/course packages.
+model UsdCredit {
+  id           String              @id @default(cuid())
+  reference    String              @unique
+  userId       String
+  user         User                @relation("CreditMember", fields: [userId], references: [id])
+  amount       Decimal             @db.Decimal(12, 2)
+  status       CreditStatus        @default(PENDING)
+  /// Internal note — never shown to the member
+  internalNote String
+  /// Underlying funds / payment reference confirmed by admin
+  fundingRef   String              @default("")
+  createdById  String
+  approvedById String?
+  approvedAt   DateTime?
+  voidedById   String?
+  voidedAt     DateTime?
+  voidReason   String?
+  sentAt       DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  ledger       CreditLedgerEntry[]
+
+  @@index([userId, status])
+}
+
+enum LedgerType {
+  CREDIT_APPROVED
+  ACTIVATION_DEBIT
+  ACTIVATION_REFUND
+  CREDIT_REVERSAL
+}
+
+/// Append-only ledger. Balance = SUM(amount) per member. Never updated or deleted.
+model CreditLedgerEntry {
+  id           String             @id @default(cuid())
+  txId         String             @unique
+  userId       String
+  user         User               @relation("LedgerMember", fields: [userId], references: [id])
+  type         LedgerType
+  /// Signed: positive adds to balance, negative deducts
+  amount       Decimal            @db.Decimal(12, 2)
+  balanceAfter Decimal            @db.Decimal(12, 2)
+  creditId     String?
+  credit       UsdCredit?         @relation(fields: [creditId], references: [id])
+  activationId String?
+  activation   PackageActivation? @relation(fields: [activationId], references: [id])
+  reversesId   String?            @unique
+  reverses     CreditLedgerEntry? @relation("Reversal", fields: [reversesId], references: [id])
+  reversedBy   CreditLedgerEntry? @relation("Reversal")
+  actorId      String?
+  memo         String             @default("")
+  createdAt    DateTime           @default(now())
+
+  @@index([userId, createdAt])
+}
+
+enum ActivationKind {
+  TOUR
+  COURSE
+}
+
+enum ActivationStatus {
+  PENDING_APPROVAL
+  ACTIVE
+  CANCELLED
+}
+
+/// A package bought with USD Package Credit; doubles as the receipt.
+model PackageActivation {
+  id             String              @id @default(cuid())
+  receiptNo      String              @unique
+  idempotencyKey String              @unique
+  userId         String
+  user           User                @relation(fields: [userId], references: [id])
+  kind           ActivationKind
+  packageId      String?
+  package        TourPackage?        @relation(fields: [packageId], references: [id])
+  courseId       String?
+  course         Course?             @relation(fields: [courseId], references: [id])
+  enquiryId      String?             @unique
+  enquiry        Enquiry?            @relation(fields: [enquiryId], references: [id])
+  itemName       String
+  travellers     Int                 @default(1)
+  unitPrice      Decimal             @db.Decimal(12, 2)
+  serviceCharge  Decimal             @db.Decimal(12, 2)
+  total          Decimal             @db.Decimal(12, 2)
+  status         ActivationStatus
+  reviewedById   String?
+  reviewedAt     DateTime?
+  cancelReason   String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  ledger         CreditLedgerEntry[]
+  volume         VolumeEntry[]
+  income         IncomeEntry[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+// ───────────── Compensation (requirements v1.1 §4–7, §12–16, §24) ─────────────
+// Record-keeping only: commissions are calculated on completed package sales,
+// shown to members, and paid off-platform by admins. No shareholder yields.
+
+/// Business volume posted to every placement upline when a package activation becomes ACTIVE.
+model VolumeEntry {
+  id            String            @id @default(cuid())
+  beneficiaryId String
+  beneficiary   User              @relation("VolumeBeneficiary", fields: [beneficiaryId], references: [id])
+  leg           Side
+  /// Signed: negative entries reverse a cancelled sale
+  amount        Decimal           @db.Decimal(14, 2)
+  weekKey       String
+  activationId  String
+  activation    PackageActivation @relation(fields: [activationId], references: [id])
+  sourceUserId  String
+  depth         Int
+  reversal      Boolean           @default(false)
+  createdAt     DateTime          @default(now())
+
+  @@unique([activationId, beneficiaryId, reversal])
+  @@index([beneficiaryId, weekKey])
+}
+
+enum IncomeType {
+  DIRECT
+  BINARY
+  RANK
+  REVERSAL
+  WITHDRAWAL_HOLD
+  WITHDRAWAL_RELEASE
+}
+
+/// Append-only income ledger. Available balance = SUM(amount).
+model IncomeEntry {
+  id            String             @id @default(cuid())
+  txId          String             @unique
+  userId        String
+  user          User               @relation("IncomeMember", fields: [userId], references: [id])
+  type          IncomeType
+  amount        Decimal            @db.Decimal(14, 2)
+  balanceAfter  Decimal            @db.Decimal(14, 2)
+  activationId  String?
+  activation    PackageActivation? @relation(fields: [activationId], references: [id])
+  weekKey       String?
+  withdrawalId  String?
+  withdrawal    Withdrawal?        @relation(fields: [withdrawalId], references: [id])
+  achievementId String?            @unique
+  achievement   RankAchievement?   @relation(fields: [achievementId], references: [id])
+  reversesId    String?            @unique
+  reverses      IncomeEntry?       @relation("IncomeReversal", fields: [reversesId], references: [id])
+  reversedBy    IncomeEntry?       @relation("IncomeReversal")
+  /// Calculation log (rates, base, calculated/payable/capped, etc.)
+  calc          Json?
+  memo          String             @default("")
+  actorId       String?
+  createdAt     DateTime           @default(now())
+  /// Duplicate-payout guard, e.g. "DIRECT:<activationId>" or "BINARY:<userId>:<week>"
+  idemKey       String?            @unique
+
+  @@index([userId, createdAt])
+  @@index([type])
+}
+
+/// Weekly binary calculation snapshot per member (one row per closed week = no duplicate payouts).
+model BinaryWeek {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  weekKey       String
+  leftCarryIn   Decimal  @db.Decimal(14, 2)
+  rightCarryIn  Decimal  @db.Decimal(14, 2)
+  leftVolume    Decimal  @db.Decimal(14, 2)
+  rightVolume   Decimal  @db.Decimal(14, 2)
+  matched       Decimal  @db.Decimal(14, 2)
+  rate          Decimal  @db.Decimal(6, 3)
+  calculated    Decimal  @db.Decimal(14, 2)
+  payable       Decimal  @db.Decimal(14, 2)
+  capped        Decimal  @db.Decimal(14, 2)
+  cap           Decimal  @db.Decimal(14, 2)
+  leftCarryOut  Decimal  @db.Decimal(14, 2)
+  rightCarryOut Decimal  @db.Decimal(14, 2)
+  eligible      Boolean  @default(true)
+  closedAt      DateTime @default(now())
+  closedById    String?
+
+  @@unique([userId, weekKey])
+  @@index([weekKey])
+}
+
+model Rank {
+  id           String            @id @default(cuid())
+  name         String            @unique
+  sortOrder    Int
+  leftVolume   Decimal           @db.Decimal(14, 2)
+  rightVolume  Decimal           @db.Decimal(14, 2)
+  reward       Decimal           @db.Decimal(14, 2)
+  active       Boolean           @default(true)
+  updatedAt    DateTime          @updatedAt
+  achievements RankAchievement[]
+}
+
+enum RewardStatus {
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
+model RankAchievement {
+  id           String       @id @default(cuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id])
+  rankId       String
+  rank         Rank         @relation(fields: [rankId], references: [id])
+  qualifiedAt  DateTime     @default(now())
+  leftVolume   Decimal      @db.Decimal(14, 2)
+  rightVolume  Decimal      @db.Decimal(14, 2)
+  reward       Decimal      @db.Decimal(14, 2)
+  rewardStatus RewardStatus @default(PENDING_REVIEW)
+  reviewedById String?
+  reviewedAt   DateTime?
+  reviewNote   String?
+  income       IncomeEntry?
+
+  @@unique([userId, rankId])
+}
+
+enum WithdrawalStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  REJECTED
+}
+
+model Withdrawal {
+  id           String           @id @default(cuid())
+  reference    String           @unique
+  userId       String
+  user         User             @relation(fields: [userId], references: [id])
+  amount       Decimal          @db.Decimal(14, 2)
+  fee          Decimal          @db.Decimal(14, 2)
+  net          Decimal          @db.Decimal(14, 2)
+  network      String           @default("USDT-BEP20")
+  address      String
+  status       WithdrawalStatus @default(PENDING)
+  txHash       String?          @unique
+  rejectReason String?
+  reviewedById String?
+  reviewedAt   DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  ledger       IncomeEntry[]
+
+  @@index([status])
+  @@index([userId])
 }

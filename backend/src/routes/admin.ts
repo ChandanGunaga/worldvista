@@ -212,6 +212,9 @@ const packageSchema = z.object({
   availableFrom: optDate,
   availableTo: optDate,
   cancellationPolicy: z.string().default(""),
+  itinerary: z.array(z.object({ day: z.coerce.number().int().min(1), title: z.string().trim().min(1).max(150), details: z.string().max(2000).default("") })).max(60).optional(),
+  serviceCharge: z.coerce.number().nonnegative().optional(),
+  creditEligible: z.boolean().optional(),
   active: z.boolean().default(true),
   verified: z.boolean().default(false),
   sortOrder: z.coerce.number().int().default(0),
@@ -263,6 +266,7 @@ const courseSchema = z.object({
   enrollmentOpen: z.boolean().default(true),
   disclaimer: z.string().min(10),
   imageUrl,
+  creditEligible: z.boolean().optional(),
   active: z.boolean().default(true),
 });
 
@@ -596,7 +600,8 @@ function toCsv(rows: Record<string, unknown>[]) {
 
 adminRouter.get("/reports/:kind.csv", REPORTS, asyncHandler(async (req, res) => {
   const q = parse(z.object({ from: z.coerce.date().optional(), to: z.coerce.date().optional() }), req.query);
-  const createdAt = { gte: q.from, lte: q.to };
+  // `to` is a calendar date: include the whole day
+  const createdAt = { gte: q.from, lt: q.to ? new Date(q.to.getTime() + 864e5) : undefined };
   let rows: Record<string, unknown>[];
   switch (req.params.kind) {
     case "members":
@@ -616,6 +621,58 @@ adminRouter.get("/reports/:kind.csv", REPORTS, asyncHandler(async (req, res) => 
       rows = (await prisma.payment.findMany({ where: { createdAt }, include: { enquiry: { select: { reference: true } } }, orderBy: { createdAt: "asc" } })).map((p) => ({
         reference: p.reference, purpose: p.purpose, enquiry: p.enquiry?.reference, payer: p.payerName, email: p.payerEmail, description: p.description,
         amount: p.amount.toString(), currency: p.currency, status: p.status, razorpayOrder: p.providerOrderId, razorpayPayment: p.providerPaymentId, paidAt: p.paidAt, createdAt: p.createdAt,
+      }));
+      break;
+    case "credits":
+      if (!["SUPER_ADMIN", "FINANCE_ADMIN"].includes(req.user!.role)) throw new HttpError(403, "Finance or Super Admin only");
+      rows = (await prisma.usdCredit.findMany({ where: { createdAt }, include: { user: { select: { memberId: true, email: true } } }, orderBy: { createdAt: "asc" } })).map((c) => ({
+        reference: c.reference, memberId: c.user.memberId, email: c.user.email, amount: c.amount.toString(), status: c.status, internalNote: c.internalNote, fundingRef: c.fundingRef,
+        createdById: c.createdById, approvedById: c.approvedById, approvedAt: c.approvedAt, voidedById: c.voidedById, voidedAt: c.voidedAt, voidReason: c.voidReason, sentAt: c.sentAt, createdAt: c.createdAt,
+      }));
+      break;
+    case "ledger":
+      if (!["SUPER_ADMIN", "FINANCE_ADMIN"].includes(req.user!.role)) throw new HttpError(403, "Finance or Super Admin only");
+      rows = (await prisma.creditLedgerEntry.findMany({ where: { createdAt }, include: { user: { select: { memberId: true } }, credit: { select: { reference: true } }, activation: { select: { receiptNo: true } } }, orderBy: { createdAt: "asc" } })).map((l) => ({
+        txId: l.txId, memberId: l.user.memberId, type: l.type, amount: l.amount.toString(), balanceAfter: l.balanceAfter.toString(), credit: l.credit?.reference, receipt: l.activation?.receiptNo,
+        reversesId: l.reversesId, actorId: l.actorId, memo: l.memo, createdAt: l.createdAt,
+      }));
+      break;
+    case "activations":
+      rows = (await prisma.packageActivation.findMany({ where: { createdAt }, include: { user: { select: { memberId: true, email: true } } }, orderBy: { createdAt: "asc" } })).map((a) => ({
+        receiptNo: a.receiptNo, memberId: a.user.memberId, email: a.user.email, kind: a.kind, item: a.itemName, travellers: a.travellers, unitPrice: a.unitPrice.toString(),
+        serviceCharge: a.serviceCharge.toString(), total: a.total.toString(), status: a.status, cancelReason: a.cancelReason, createdAt: a.createdAt,
+      }));
+      break;
+    case "enrollments":
+      rows = (await prisma.enrollment.findMany({ where: { createdAt }, include: { user: { select: { memberId: true, email: true } }, course: { select: { title: true } }, _count: { select: { progress: true } } }, orderBy: { createdAt: "asc" } })).map((e) => ({
+        memberId: e.user.memberId, email: e.user.email, course: e.course.title, status: e.status, classesCompleted: e._count.progress, createdAt: e.createdAt,
+      }));
+      break;
+    case "income":
+      if (!["SUPER_ADMIN", "FINANCE_ADMIN"].includes(req.user!.role)) throw new HttpError(403, "Finance or Super Admin only");
+      rows = (await prisma.incomeEntry.findMany({ where: { createdAt }, include: { user: { select: { memberId: true } }, activation: { select: { receiptNo: true } } }, orderBy: { createdAt: "asc" } })).map((e) => ({
+        txId: e.txId, memberId: e.user.memberId, type: e.type, amount: e.amount.toString(), balanceAfter: e.balanceAfter.toString(), receipt: e.activation?.receiptNo, week: e.weekKey,
+        reversesId: e.reversesId, memo: e.memo, calculation: e.calc ? JSON.stringify(e.calc) : "", createdAt: e.createdAt,
+      }));
+      break;
+    case "binary-weeks":
+      if (!["SUPER_ADMIN", "FINANCE_ADMIN"].includes(req.user!.role)) throw new HttpError(403, "Finance or Super Admin only");
+      rows = (await prisma.binaryWeek.findMany({ where: { closedAt: createdAt }, include: { user: { select: { memberId: true } } }, orderBy: [{ weekKey: "asc" }] })).map((b) => ({
+        week: b.weekKey, memberId: b.user.memberId, leftCarryIn: b.leftCarryIn.toString(), rightCarryIn: b.rightCarryIn.toString(), leftVolume: b.leftVolume.toString(), rightVolume: b.rightVolume.toString(),
+        matched: b.matched.toString(), rate: b.rate.toString(), calculated: b.calculated.toString(), cap: b.cap.toString(), payable: b.payable.toString(), cappedExcess: b.capped.toString(),
+        leftCarryOut: b.leftCarryOut.toString(), rightCarryOut: b.rightCarryOut.toString(), eligible: b.eligible, closedAt: b.closedAt,
+      }));
+      break;
+    case "withdrawals":
+      if (!["SUPER_ADMIN", "FINANCE_ADMIN"].includes(req.user!.role)) throw new HttpError(403, "Finance or Super Admin only");
+      rows = (await prisma.withdrawal.findMany({ where: { createdAt }, include: { user: { select: { memberId: true, email: true } } }, orderBy: { createdAt: "asc" } })).map((w) => ({
+        reference: w.reference, memberId: w.user.memberId, email: w.user.email, amount: w.amount.toString(), fee: w.fee.toString(), net: w.net.toString(), network: w.network, address: w.address,
+        status: w.status, txHash: w.txHash, rejectReason: w.rejectReason, reviewedById: w.reviewedById, reviewedAt: w.reviewedAt, completedAt: w.completedAt, createdAt: w.createdAt,
+      }));
+      break;
+    case "rank-rewards":
+      rows = (await prisma.rankAchievement.findMany({ where: { qualifiedAt: createdAt }, include: { user: { select: { memberId: true } }, rank: { select: { name: true } } }, orderBy: { qualifiedAt: "asc" } })).map((a) => ({
+        memberId: a.user.memberId, rank: a.rank.name, leftVolume: a.leftVolume.toString(), rightVolume: a.rightVolume.toString(), reward: a.reward.toString(), status: a.rewardStatus, qualifiedAt: a.qualifiedAt, reviewedAt: a.reviewedAt,
       }));
       break;
     case "audit":

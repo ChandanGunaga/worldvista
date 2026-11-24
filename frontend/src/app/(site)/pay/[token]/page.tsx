@@ -65,7 +65,7 @@ export default function PayPage() {
   }
 
   return (
-    <div className="container-x flex min-h-[70vh] items-center justify-center py-16">
+    <div className="container-x flex min-h-[70vh] items-center justify-center pb-16 pt-36">
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" />
       <div className="card w-full max-w-md p-8">
         <p className="eyebrow">Secure payment</p>

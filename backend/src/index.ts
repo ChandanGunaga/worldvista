@@ -12,6 +12,10 @@ import { authRouter } from "./routes/auth";
 import { publicRouter } from "./routes/public";
 import { memberRouter } from "./routes/member";
 import { adminRouter } from "./routes/admin";
+import { adminFeaturesRouter } from "./routes/adminFeatures";
+import { memberFeaturesRouter } from "./routes/memberFeatures";
+import { adminCompRouter, memberCompRouter } from "./routes/compensation";
+import { closeDueWeeks, getSettings } from "./lib/compensation";
 import { paymentsRouter, webhookRouter } from "./routes/payments";
 
 const app = express();
@@ -39,6 +43,10 @@ app.use("/api/auth", authRouter);
 app.use("/api/public", publicRouter);
 app.use("/api/payments", paymentsRouter);
 app.use("/api/member", memberRouter);
+app.use("/api/member", memberFeaturesRouter);
+app.use("/api/member", memberCompRouter);
+app.use("/api/admin", adminFeaturesRouter);
+app.use("/api/admin", adminCompRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api", (_req, res) => res.status(404).json({ error: "Not found" }));
 
@@ -49,3 +57,13 @@ app.listen(env.port, () => {
   console.log(`World Vista API listening on http://localhost:${env.port}`);
   console.log("Integrations:", Object.entries(features).map(([k, v]) => `${k}=${v ? "on" : "off"}`).join(" "));
 });
+
+// Weekly binary close: runs hourly; closes any finished week exactly once (idempotent).
+setInterval(async () => {
+  try {
+    const s = await getSettings();
+    if (s.enabled && s.autoCloseWeeks) await closeDueWeeks(null);
+  } catch (e) {
+    console.error("Binary week close failed", e);
+  }
+}, 60 * 60 * 1000).unref();

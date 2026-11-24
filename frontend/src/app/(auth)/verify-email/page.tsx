@@ -38,13 +38,13 @@ export default function VerifyEmail() {
   return (
     <form onSubmit={submit} className="space-y-5">
       <div>
-        <h1 className="text-3xl text-navy-950">Verify your email</h1>
+        <h1 className="font-serif text-3xl text-white">Verify your email</h1>
         <p className="mt-1 text-sm text-slate-500">We sent a 6-digit code to your email. It expires in 10 minutes.</p>
       </div>
       <Field label="Email"><input className="input" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
       <Field label="Verification code"><input className="input text-center text-lg tracking-[0.5em]" inputMode="numeric" maxLength={6} required value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} /></Field>
       {msg && <Alert kind={msg.kind}>{msg.text}</Alert>}
-      <button className="btn-navy w-full" disabled={busy}>{busy ? "Verifying…" : "Verify email"}</button>
+      <button className="btn-lux w-full" disabled={busy}>{busy ? "Verifying…" : "Verify email"}</button>
       <button type="button" onClick={resend} className="w-full text-sm text-navy-700 underline">Resend code</button>
     </form>
   );

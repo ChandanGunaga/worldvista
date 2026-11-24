@@ -6,12 +6,13 @@ export type TourPackage = {
   nights: number; days: number; summary: string; description: string; hotelCategory: string; tag: string | null;
   validityDays: number | null; inclusions: string[]; exclusions: string[]; imageUrl: string | null;
   availableFrom: string | null; availableTo: string | null; cancellationPolicy: string; active: boolean; verified: boolean; sortOrder: number;
+  itinerary?: { day: number; title: string; details: string }[]; serviceCharge?: string; creditEligible?: boolean;
 };
 
 export type Course = {
   id: string; slug: string; title: string; tuition: string; currency: string; duration: string; schedule: string;
   topics: string[]; syllabus: string; trainer: string | null; startDate: string | null; enrollmentOpen: boolean;
-  disclaimer: string; imageUrl: string | null; active: boolean;
+  disclaimer: string; imageUrl: string | null; active: boolean; creditEligible?: boolean;
 };
 
 export type Faq = { id: string; question: string; answer: string; sortOrder: number; active: boolean };

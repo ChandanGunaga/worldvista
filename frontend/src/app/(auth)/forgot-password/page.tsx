@@ -35,16 +35,16 @@ export default function ForgotPassword() {
   if (step === "done")
     return (
       <div className="space-y-5">
-        <h1 className="text-3xl text-navy-950">Password updated</h1>
+        <h1 className="font-serif text-3xl text-white">Password updated</h1>
         <Alert kind="success">Your password has been reset. All other sessions were signed out.</Alert>
-        <Link href="/login" className="btn-navy w-full">Sign in</Link>
+        <Link href="/login" className="btn-lux w-full">Sign in</Link>
       </div>
     );
 
   return (
     <form onSubmit={submit} className="space-y-5">
       <div>
-        <h1 className="text-3xl text-navy-950">Reset your password</h1>
+        <h1 className="font-serif text-3xl text-white">Reset your password</h1>
         <p className="mt-1 text-sm text-slate-500">{step === "request" ? "We'll email you a 6-digit reset code." : "Enter the code and choose a new password."}</p>
       </div>
       <Field label="Email"><input className="input" type="email" required value={email} disabled={step === "reset"} onChange={(e) => setEmail(e.target.value)} /></Field>
@@ -55,7 +55,7 @@ export default function ForgotPassword() {
         </>
       )}
       {msg && <Alert kind={msg.kind}>{msg.text}</Alert>}
-      <button className="btn-navy w-full" disabled={busy}>{busy ? "Please wait…" : step === "request" ? "Send reset code" : "Update password"}</button>
+      <button className="btn-lux w-full" disabled={busy}>{busy ? "Please wait…" : step === "request" ? "Send reset code" : "Update password"}</button>
       <p className="text-center text-sm"><Link href="/login" className="text-navy-700 underline">Back to sign in</Link></p>
     </form>
   );

@@ -6,21 +6,28 @@ import { ImageUpload } from "@/components/ImageUpload";
 import { api, money } from "@/lib/api";
 import type { TourPackage } from "@/lib/types";
 
-type Row = TourPackage & { _count: { enquiries: number } };
+type ItineraryDay = { day: number; title: string; details: string };
+type Row = TourPackage & { _count: { enquiries: number }; itinerary?: ItineraryDay[] | null; serviceCharge?: string | number | null; creditEligible?: boolean };
+type DayRow = { key: number; day: string; title: string; details: string };
+let dayKey = 0;
+const newDay = (d: Partial<ItineraryDay> = {}): DayRow => ({ key: ++dayKey, day: d.day != null ? String(d.day) : "", title: d.title ?? "", details: d.details ?? "" });
 
 const blank = {
   slug: "", name: "", destination: "", price: "0", currency: "USD", chargeNote: "+ service charge", nights: "3", days: "4",
   summary: "", description: "", hotelCategory: "", tag: "", validityDays: "90", inclusions: "", exclusions: "", imageUrl: "",
   availableFrom: "", availableTo: "", cancellationPolicy: "", active: true, verified: false, sortOrder: "0",
+  serviceCharge: "0", creditEligible: true, itinerary: [] as DayRow[],
 };
 type Form = typeof blank;
 
-const toForm = (p: TourPackage): Form => ({
+const toForm = (p: Row): Form => ({
   slug: p.slug, name: p.name, destination: p.destination, price: String(p.price), currency: p.currency, chargeNote: p.chargeNote,
   nights: String(p.nights), days: String(p.days), summary: p.summary, description: p.description, hotelCategory: p.hotelCategory,
   tag: p.tag ?? "", validityDays: p.validityDays == null ? "" : String(p.validityDays), inclusions: p.inclusions.join("\n"),
   exclusions: p.exclusions.join("\n"), imageUrl: p.imageUrl ?? "", availableFrom: p.availableFrom?.slice(0, 10) ?? "",
   availableTo: p.availableTo?.slice(0, 10) ?? "", cancellationPolicy: p.cancellationPolicy, active: p.active, verified: p.verified, sortOrder: String(p.sortOrder),
+  serviceCharge: p.serviceCharge == null ? "0" : String(p.serviceCharge), creditEligible: p.creditEligible ?? true,
+  itinerary: (Array.isArray(p.itinerary) ? p.itinerary : []).slice().sort((a, b) => a.day - b.day).map((d) => newDay(d)),
 });
 
 const lines = (s: string) => s.split("\n").map((l) => l.trim()).filter(Boolean);
@@ -33,10 +40,23 @@ export default function PackagesPage() {
   const [err, setErr] = useState("");
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => ({ ...f, [k]: v }));
 
+  const setDay = (key: number, patch: Partial<DayRow>) => setForm((f) => ({ ...f, itinerary: f.itinerary.map((d) => (d.key === key ? { ...d, ...patch } : d)) }));
+  const addDay = () => setForm((f) => {
+    const max = f.itinerary.reduce((m, d) => Math.max(m, Number(d.day) || 0), 0);
+    return { ...f, itinerary: [...f.itinerary, newDay({ day: max + 1 })] };
+  });
+  const removeDay = (key: number) => setForm((f) => ({ ...f, itinerary: f.itinerary.filter((d) => d.key !== key) }));
+  const sortDays = () => setForm((f) => ({ ...f, itinerary: f.itinerary.slice().sort((a, b) => (Number(a.day) || 0) - (Number(b.day) || 0)) }));
+
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    setBusy(true);
     setErr("");
+    const days = form.itinerary.filter((d) => d.title.trim() || d.details.trim());
+    if (days.some((d) => !(Number(d.day) >= 1) || !d.title.trim())) {
+      setErr("Each itinerary day needs a day number (1 or more) and a title.");
+      return;
+    }
+    setBusy(true);
     const payload = {
       ...form,
       tag: form.tag || null,
@@ -46,6 +66,11 @@ export default function PackagesPage() {
       imageUrl: form.imageUrl.trim(),
       availableFrom: form.availableFrom || null,
       availableTo: form.availableTo || null,
+      serviceCharge: Number(form.serviceCharge) || 0,
+      creditEligible: form.creditEligible,
+      itinerary: days
+        .map((d) => ({ day: Number(d.day), title: d.title.trim(), details: d.details.trim() }))
+        .sort((a, b) => a.day - b.day),
     };
     try {
       if (editing === "new") await api("/admin/packages", { method: "POST", json: payload });
@@ -64,7 +89,7 @@ export default function PackagesPage() {
       <PageHeader
         title="Tour packages"
         subtitle="Destination cards shown on the public Tourism page"
-        action={<button className="btn-gold" onClick={() => { setForm(blank); setErr(""); setEditing("new"); }}>New package</button>}
+        action={<button className="btn-lux" onClick={() => { setForm(blank); setErr(""); setEditing("new"); }}>New package</button>}
       />
       {error && <Alert>{error}</Alert>}
       {loading && !data ? <Spinner /> : !data?.packages.length ? <Empty>No packages yet.</Empty> : (
@@ -75,14 +100,18 @@ export default function PackagesPage() {
               {data.packages.map((p) => (
                 <tr key={p.id}>
                   <td>{p.sortOrder}</td>
-                  <td className="font-medium text-navy-950">{p.name}<div className="text-xs font-normal text-slate-500">/{p.slug}</div></td>
-                  <td className="whitespace-nowrap">{money(p.price, p.currency)} <span className="text-xs text-slate-500">{p.chargeNote}</span></td>
+                  <td className="font-medium text-white">{p.name}<div className="text-xs font-normal text-white/45">/{p.slug}</div></td>
+                  <td className="whitespace-nowrap">
+                    {money(p.price, p.currency)} <span className="text-xs text-white/45">{p.chargeNote}</span>
+                    {Number(p.serviceCharge) > 0 && <div className="text-xs text-white/45">+ {money(p.serviceCharge ?? 0, p.currency)} service / traveller</div>}
+                  </td>
                   <td className="whitespace-nowrap">{p.nights}N / {p.days}D</td>
                   <td>{p.tag ?? p.hotelCategory}</td>
                   <td>{p._count.enquiries}</td>
                   <td className="space-x-1 whitespace-nowrap">
                     <Badge value={p.active ? "ACTIVE" : "CLOSED"} />
                     {!p.verified && <Badge value="PENDING_VERIFICATION" />}
+                    {p.creditEligible !== false && p.currency === "USD" && <span className="chip">USD credit</span>}
                   </td>
                   <td><button className="btn-outline btn-sm" onClick={() => { setForm(toForm(p)); setErr(""); setEditing(p.id); }}>Edit</button></td>
                 </tr>
@@ -100,6 +129,7 @@ export default function PackagesPage() {
           <Field label="Hotel category"><input className="input" required value={form.hotelCategory} onChange={(e) => set("hotelCategory", e.target.value)} /></Field>
           <Field label="Price"><input className="input" type="number" min="0" step="0.01" required value={form.price} onChange={(e) => set("price", e.target.value)} /></Field>
           <Field label="Currency"><input className="input" maxLength={3} required value={form.currency} onChange={(e) => set("currency", e.target.value.toUpperCase())} /></Field>
+          <Field label="Service charge (USD per traveller)" hint="Added per traveller when activated with USD credit"><input className="input" type="number" min="0" step="0.01" value={form.serviceCharge} onChange={(e) => set("serviceCharge", e.target.value)} /></Field>
           <Field label="Charge note"><input className="input" value={form.chargeNote} onChange={(e) => set("chargeNote", e.target.value)} /></Field>
           <Field label="Tag (card label)"><input className="input" value={form.tag} onChange={(e) => set("tag", e.target.value)} /></Field>
           <Field label="Nights"><input className="input" type="number" min="0" required value={form.nights} onChange={(e) => set("nights", e.target.value)} /></Field>
@@ -122,15 +152,42 @@ export default function PackagesPage() {
           </div>
           <Field label="Summary (card highlights)" className="sm:col-span-2"><textarea className="input" rows={2} required minLength={5} value={form.summary} onChange={(e) => set("summary", e.target.value)} /></Field>
           <Field label="Description / itinerary" className="sm:col-span-2"><textarea className="input" rows={4} value={form.description} onChange={(e) => set("description", e.target.value)} /></Field>
+          <div className="sm:col-span-2 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div className="label !mb-0">Day-by-day itinerary</div>
+                <div className="text-xs text-white/45">Shown to members on the package page. Days are saved in day-number order.</div>
+              </div>
+              <div className="flex gap-2">
+                {form.itinerary.length > 1 && <button type="button" className="btn-outline btn-sm" onClick={sortDays}>Sort by day</button>}
+                <button type="button" className="btn-outline btn-sm" onClick={addDay}>+ Add day</button>
+              </div>
+            </div>
+            {form.itinerary.length === 0 ? (
+              <p className="text-sm text-white/45">No itinerary days yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {form.itinerary.map((d) => (
+                  <div key={d.key} className="grid gap-2 rounded-lg border border-white/10 p-3 sm:grid-cols-[80px_1fr_auto]">
+                    <input className="input" type="number" min="1" aria-label="Day number" placeholder="Day" value={d.day} onChange={(e) => setDay(d.key, { day: e.target.value })} />
+                    <input className="input" aria-label="Day title" placeholder="Title, e.g. Arrival & city tour" maxLength={150} value={d.title} onChange={(e) => setDay(d.key, { title: e.target.value })} />
+                    <button type="button" className="btn-outline btn-sm self-center" onClick={() => removeDay(d.key)} aria-label={`Remove day ${d.day}`}>Remove</button>
+                    <textarea className="input sm:col-span-3" rows={2} aria-label="Day details" placeholder="Details" maxLength={2000} value={d.details} onChange={(e) => setDay(d.key, { details: e.target.value })} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           <Field label="Inclusions (one per line)"><textarea className="input" rows={5} value={form.inclusions} onChange={(e) => set("inclusions", e.target.value)} /></Field>
           <Field label="Exclusions (one per line)"><textarea className="input" rows={5} value={form.exclusions} onChange={(e) => set("exclusions", e.target.value)} /></Field>
           <Field label="Cancellation / refund policy" className="sm:col-span-2"><textarea className="input" rows={3} value={form.cancellationPolicy} onChange={(e) => set("cancellationPolicy", e.target.value)} /></Field>
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.active} onChange={(e) => set("active", e.target.checked)} /> Active (visible publicly)</label>
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.verified} onChange={(e) => set("verified", e.target.checked)} /> Details verified with supplier</label>
+          <label className="flex items-center gap-2 text-sm text-white/80 sm:col-span-2"><input type="checkbox" checked={form.creditEligible} onChange={(e) => set("creditEligible", e.target.checked)} /> Can be paid with USD credit{form.currency !== "USD" && <span className="text-xs text-gold-300">(only applies when currency is USD)</span>}</label>
+          <label className="flex items-center gap-2 text-sm text-white/80"><input type="checkbox" checked={form.active} onChange={(e) => set("active", e.target.checked)} /> Active (visible publicly)</label>
+          <label className="flex items-center gap-2 text-sm text-white/80"><input type="checkbox" checked={form.verified} onChange={(e) => set("verified", e.target.checked)} /> Details verified with supplier</label>
           {err && <div className="sm:col-span-2"><Alert>{err}</Alert></div>}
           <div className="flex justify-end gap-2 sm:col-span-2">
             <button type="button" className="btn-outline" onClick={() => setEditing(null)}>Cancel</button>
-            <button className="btn-navy" disabled={busy}>{busy ? "Saving…" : "Save package"}</button>
+            <button className="btn-lux" disabled={busy}>{busy ? "Saving…" : "Save package"}</button>
           </div>
         </form>
       </Modal>

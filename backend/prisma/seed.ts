@@ -23,6 +23,15 @@ const packages = [
     summary: "Manali pine valleys, Gulmarg snow gondolas, Jaipur Pink City royal havelis, and sunny Goa coastal beaches." },
 ];
 
+const ITINERARIES: Record<string, [string, string][]> = {
+  "sri-lanka": [["Arrive in Colombo", "Airport welcome, transfer to hotel, evening at Galle Face Green."], ["Sigiriya & Dambulla", "Climb the Sigiriya rock fortress, visit the Dambulla cave temples."], ["Kandy & Nuwara Eliya", "Temple of the Tooth, tea-estate visit and scenic hill-country drive."], ["Departure", "Breakfast, transfer to Colombo airport."]],
+  oman: [["Arrive in Muscat", "Airport welcome, Muttrah Corniche evening walk."], ["Muscat city", "Sultan Qaboos Grand Mosque, Royal Opera House, Muttrah Souq."], ["Wahiba Sands", "4x4 desert safari, Wadi Bani Khalid, sunset over the dunes."], ["Departure", "Breakfast, transfer to Muscat airport."]],
+  malaysia: [["Arrive in Kuala Lumpur", "Airport welcome, Petronas Towers by night."], ["Batu Caves & city", "Batu Caves shrines, Merdeka Square, Central Market."], ["Genting Highlands", "Cable car up to the highlands, free time."], ["Departure", "Breakfast, transfer to KLIA."]],
+  "dubai-elite": [["Arrive in Dubai", "VIP airport welcome, Dubai Marina dinner cruise."], ["City & Burj Khalifa", "Old Dubai, gold and spice souks, At the Top of Burj Khalifa."], ["Desert safari", "Private dune drive, camel ride, BBQ dinner under the stars."], ["Palm Jumeirah", "Beach cabana day and Arabian Gulf yacht cruise."], ["Departure", "Breakfast, transfer to DXB."]],
+  thailand: [["Arrive in Phuket", "Airport welcome, check in to beach resort."], ["Phi Phi islands", "Speedboat tour, lagoon swim and coral-reef snorkelling."], ["Leisure & night market", "Free morning, evening culinary night market."], ["Departure", "Breakfast, transfer to Phuket airport."]],
+  "domestic-tours": [["Arrival", "Welcome and transfer to heritage hotel; evening at leisure."], ["Sightseeing", "Full-day guided tour of the chosen destination (Manali, Gulmarg, Jaipur or Goa)."], ["Departure", "Breakfast and transfer."]],
+};
+
 const pages: { slug: string; title: string; isPolicy: boolean; body: string }[] = [
   {
     slug: "about",
@@ -177,6 +186,41 @@ const modules = [
   },
 ];
 
+// Requirements v1.1–v1.3 (binary cap, level income, ranks, withdrawals). Recorded as spec only.
+const V13_DECISIONS = [
+  "Binary basis: matched volume, weaker-leg volume or other? (§21)",
+  "Weekly cap period: timezone and exact reset day/time? (§21)",
+  "Over-cap: confirm excess above $1,500 is forfeited, not carried forward (§21)",
+  "Direct commission base: gross price or excluding taxes/fees? (§21)",
+  "Rank volume: do all package types count equally? Refund treatment? (§21)",
+  "Ambassador threshold ($25,000) is lower than Navigator ($50,000) — confirm (§7)",
+  "$1,000 shareholder package duration not provided (§21)",
+  "200% maximum vs 6% x 34 months = 204% (§11)",
+  "Missing/ineligible upline: skip level or compress? (§32)",
+  "Payment / withdrawal provider, fees, min/max and approval rules (§21)",
+];
+const SPEC_UPDATES: Record<string, { sourceSpec: object; openQuestions: string[] }> = {
+  REWARD_1: { sourceSpec: { version: "1.1", rate: "10% of eligible commissionable amount", examples: { 100: 10, 300: 30, 500: 50, 1000: 100 }, eligible: ["Tourism (proposed)", "Trading education (proposed)", "Shareholder (proposed)"] }, openQuestions: [V13_DECISIONS[3], LEGAL] },
+  REWARD_2: {
+    sourceSpec: { version: "1.1", rate: "10% on approved binary base", weeklyCapUsd: 1500, capScope: "Binary only — direct, level and rank not counted", carryForward: "None by default (excess forfeited)", examples: { 600: 600, 1200: 1200, 1500: 1500, 1800: 1500, 2500: 1500 }, display: "calculated / payable / capped-excess shown separately" },
+    openQuestions: [V13_DECISIONS[0], V13_DECISIONS[1], V13_DECISIONS[2], LEGAL],
+  },
+  BINARY_ENGINE: { sourceSpec: { version: "1.1", weeklyCapUsd: 1500, requirements: ["Configurable cap", "Documented reset boundary + timezone", "Calculation logs", "Duplicate-payout prevention", "Admin report of members at cap"] }, openQuestions: [V13_DECISIONS[0], V13_DECISIONS[1], V13_DECISIONS[4], LEGAL] },
+  REWARD_3: { sourceSpec: { version: "1.3", source: "Eligible monthly shareholder-package rewards only", levels: { "1": "1.00%", "2-5": "0.50% each", "6-10": "0.25% each", "11-15": "0.10% each" }, total: "5.50%", noLevelIncomeFrom: ["Tourism", "Trading education"], defaultCompression: "Preserve original level; no compression" }, openQuestions: [V13_DECISIONS[8], LEGAL] },
+  REWARD_5: {
+    sourceSpec: { version: "1.1", ranks: [["Voyager", 2500, 50], ["Discoverer", 5000, 100], ["Explorer", 10000, 200], ["Pathfinder", 25000, 500], ["Navigator", 50000, 1000], ["Ambassador", 25000, 5000], ["Travel Elite", 500000, 10000], ["Crown Legend", 1000000, 20000]].map(([rank, volumeEachSide, cashReward]) => ({ rank, volumeEachSide, cashReward })) },
+    openQuestions: [V13_DECISIONS[5], V13_DECISIONS[4], LEGAL],
+  },
+  SHAREHOLDER_PACKAGES: {
+    sourceSpec: { version: "1.1", packages: [[100, "6%", 6, "34 months"], [500, "6%", 30, "34 months"], [1000, "6%", 60, "Not provided"], [5000, "7%", 350, "29 months"], [10000, "8%", 800, "25 months"], [20000, "10%", 2000, "20 months"]].map(([amount, monthlyRate, monthlyAmount, duration]) => ({ amount, monthlyRate, monthlyAmount, duration })), limitedOfferCap: "200%", specGate: "§22: do not launch, collect funds or advertise fixed returns until legal/financial advisers confirm" },
+    openQuestions: [V13_DECISIONS[6], V13_DECISIONS[7], LEGAL, "Fixed monthly returns on deposits may fall under the Banning of Unregulated Deposit Schemes Act, 2019 and SEBI collective-investment rules."],
+  },
+  WITHDRAWALS: {
+    sourceSpec: { version: "1.2", network: "USDT — BNB Smart Chain (BEP20)", memberStatuses: ["Pending", "Completed", "Rejected"], adminInternal: "Processing (optional)", completionRule: "Only after transfer is broadcast and tx hash recorded", addressChange: "Email OTP + expiry + attempt limits + security hold + audit" },
+    openQuestions: [V13_DECISIONS[9], "Depends on an approved income/wallet balance existing", "KYC/AML and VDA reporting obligations", LEGAL],
+  },
+};
+
 async function main() {
   const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? "admin@worldvista.local").toLowerCase();
   const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "ChangeMe!2026";
@@ -196,7 +240,11 @@ async function main() {
 
   for (const [i, p] of packages.entries()) {
     const data = { ...p, inclusions: INCLUSIONS, exclusions: EXCLUSIONS, cancellationPolicy: CANCELLATION, validityDays: 90, sortOrder: i, imageUrl: `/images/packages/${p.slug}.jpg` };
-    await prisma.tourPackage.upsert({ where: { slug: p.slug }, update: {}, create: data });
+    const itinerary = (ITINERARIES[p.slug] ?? []).map(([title, details], d) => ({ day: d + 1, title, details }));
+    const row = await prisma.tourPackage.upsert({ where: { slug: p.slug }, update: {}, create: { ...data, itinerary } });
+    if (Array.isArray(row.itinerary) && row.itinerary.length === 0 && itinerary.length) {
+      await prisma.tourPackage.update({ where: { id: row.id }, data: { itinerary } });
+    }
   }
 
   await prisma.course.upsert({
@@ -214,6 +262,28 @@ async function main() {
       imageUrl: "/images/education.jpg",
     },
   });
+
+  const course = await prisma.course.findUniqueOrThrow({ where: { slug: "financial-markets-mastery" } });
+  if ((await prisma.courseSession.count({ where: { courseId: course.id } })) === 0) {
+    const topics = [
+      "Orientation & market structure", "Candles, trends and timeframes", "Support, resistance and supply/demand",
+      "Smart Money Concepts — introduction", "Order blocks", "Order blocks — practice session",
+      "Liquidity and liquidity sweeps", "Break of structure (BOS) & change of character", "Putting it together: SMC walkthrough",
+      "Risk management & position sizing", "Trading psychology and journaling", "Review, Q&A and next steps",
+    ];
+    // Mon / Wed / Fri at 19:00 IST (13:30 UTC), starting next Monday
+    const start = new Date();
+    start.setUTCDate(start.getUTCDate() + ((8 - start.getUTCDay()) % 7 || 7));
+    start.setUTCHours(13, 30, 0, 0);
+    const offsets = [0, 2, 4];
+    await prisma.courseSession.createMany({
+      data: topics.map((title, i) => {
+        const d = new Date(start);
+        d.setUTCDate(d.getUTCDate() + Math.floor(i / 3) * 7 + offsets[i % 3]);
+        return { courseId: course.id, title: `Class ${i + 1}: ${title}`, startsAt: d, durationMins: 90, instructor: course.trainer };
+      }),
+    });
+  }
 
   for (const p of pages) {
     const existing = await prisma.page.findUnique({ where: { slug: p.slug } });
@@ -237,8 +307,20 @@ async function main() {
     create: { key: "company", value: { legalName: "World Vista (legal entity name to be confirmed)", registration: "", gstin: "" } },
   });
 
+  // Rank table from requirements v1.1 §7 (Ambassador threshold kept as supplied; flagged in admin for confirmation)
+  const RANKS: [string, number, number][] = [
+    ["Voyager", 2500, 50], ["Discoverer", 5000, 100], ["Explorer", 10000, 200], ["Pathfinder", 25000, 500], ["Navigator", 50000, 1000],
+    ["Ambassador", 25000, 5000], ["Travel Elite", 500000, 10000], ["Crown Legend", 1000000, 20000],
+  ];
+  for (const [i, [name, vol, reward]] of RANKS.entries()) {
+    await prisma.rank.upsert({ where: { name }, update: {}, create: { name, sortOrder: i + 1, leftVolume: vol, rightVolume: vol, reward } });
+  }
+
   for (const m of modules) {
-    await prisma.moduleConfig.upsert({ where: { key: m.key }, update: { sourceSpec: m.sourceSpec, openQuestions: m.openQuestions, name: m.name }, create: m });
+    const u = SPEC_UPDATES[m.key];
+    const sourceSpec = u ? { ...u.sourceSpec, earlierVersion: m.sourceSpec } : m.sourceSpec;
+    const openQuestions = u ? u.openQuestions : m.openQuestions;
+    await prisma.moduleConfig.upsert({ where: { key: m.key }, update: { sourceSpec, openQuestions, name: m.name }, create: { ...m, sourceSpec, openQuestions } });
   }
 
   console.log(`Seed complete. Super admin: ${adminEmail}`);
