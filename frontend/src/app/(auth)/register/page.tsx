@@ -48,7 +48,7 @@ export default function Register() {
         <Field label="Confirm password"><input className="input" type="password" required autoComplete="new-password" value={f.confirm} onChange={set("confirm")} /></Field>
         <Field label="Country"><input className="input" required autoComplete="country-name" value={f.country} onChange={set("country")} /></Field>
         <Field label="City / address"><input className="input" autoComplete="street-address" value={f.address} onChange={set("address")} /></Field>
-        <Field label="Referrer ID (optional)"><input className="input uppercase" placeholder="WV123456" value={f.sponsorId} onChange={set("sponsorId")} /></Field>
+        <Field label="Referral ID"><input className="input uppercase" placeholder="WV123456" value={f.sponsorId} onChange={set("sponsorId")} /></Field>
         {f.sponsorId && (
           <Field label="Team side">
             <select className="input" value={f.side} onChange={set("side")}><option value="LEFT">Left</option><option value="RIGHT">Right</option></select>
@@ -57,7 +57,7 @@ export default function Register() {
       </div>
       <label className="flex items-start gap-3 text-sm text-slate-600">
         <input type="checkbox" className="mt-1 h-4 w-4 accent-gold-400" checked={f.consent} onChange={set("consent")} required />
-        <span>I agree to the <Link href="/legal/terms" target="_blank" className="underline">Terms & Conditions</Link> and <Link href="/legal/privacy" target="_blank" className="underline">Privacy Policy</Link>, and I have read the <Link href="/legal/disclaimer" target="_blank" className="underline">Disclaimer</Link>.</span>
+        <span>I agree to the Terms & Conditions and Privacy Policy, and I have read the Disclaimer.</span>
       </label>
       <Alert>{error}</Alert>
       <button className="btn-lux w-full" disabled={busy}>{busy ? "Creating account…" : "Create account"}</button>

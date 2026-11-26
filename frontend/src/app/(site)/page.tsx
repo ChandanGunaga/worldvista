@@ -1,19 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
-import { serverApi, money } from "@/lib/api";
+import { serverApi } from "@/lib/api";
 import type { Course, Faq, TourPackage } from "@/lib/types";
 import { PackageCard } from "@/components/PackageCard";
 import { Reveal } from "@/components/lux/Reveal";
-import { CountUp } from "@/components/lux/CountUp";
 import { Emblem } from "@/components/lux/Emblem";
 import { SectionHead } from "@/components/lux/SectionHead";
 
 const PILLARS = [
   {
     k: "Travel",
-    title: "Curated Luxury Journeys",
-    body: "Handpicked itineraries across Asia and the Middle East, with verified 3, 4 and 5-star stays and transparent, all-in quotes.",
-    points: ["Dubai, Sri Lanka, Oman, Malaysia & Thailand", "Private transfers and guided sightseeing", "90-day departure validity on eligible packages", "A dedicated travel desk from enquiry to return"],
+    title: "Curated Travel Experiences",
+    body: "Explore selected destinations, accommodation options and travel experiences across Asia and the Middle East.",
+    points: ["Dubai, Sri Lanka, Oman, Malaysia & Thailand", "Private transfers and guided sightseeing", "A dedicated travel desk from enquiry to return"],
     href: "/tours",
     cta: "Explore journeys",
   },
@@ -29,7 +28,7 @@ const PILLARS = [
     k: "Experience",
     title: "Lifestyle & Membership",
     body: "A members' portal for bookings, learning and support today. Concierge services and a lifestyle marketplace are on the roadmap.",
-    points: ["Personal member dashboard", "Booking & payment history", "Priority support tickets", "Future: concierge & curated goods"],
+    points: ["Personal member dashboard", "Booking & payment history", "Member Support", "Future: concierge & curated goods"],
     href: "/register",
     cta: "Become a member",
   },
@@ -37,9 +36,9 @@ const PILLARS = [
 
 const WHY = [
   { n: "01", t: "Handpicked Hospitality", d: "Every property is chosen for comfort, location and service, from boutique retreats to five-star resorts." },
-  { n: "02", t: "Transparent Pricing", d: "Clear package prices, service charges quoted upfront and every detail confirmed in writing before you pay." },
+  { n: "02", t: "Transparent Pricing", d: "Clear information about package inclusions, applicable charges and booking conditions before confirmation." },
   { n: "03", t: "Human Expertise", d: "Real travel specialists plan your dates, rooms and transfers, and stay reachable throughout your trip." },
-  { n: "04", t: "Secure & Simple", d: "Pay securely online, track every booking from your member dashboard and get help through support tickets." },
+  { n: "04", t: "Secure & Simple", d: "Access available booking information and contact our support team for assistance." },
 ];
 
 const ROADMAP = [
@@ -77,16 +76,11 @@ export default async function Home() {
               <span className="text-gold-grad">World Vista</span>
             </h1>
             <p className="mx-auto mt-6 max-w-xl animate-rise text-lg leading-relaxed text-white/65 [animation-delay:240ms] lg:mx-0">
-              Curated luxury journeys, handpicked stays and practical financial-markets education, all built around one idea: <em className="font-serif text-xl not-italic text-champagne">a more meaningful life.</em>
+              Discover quality travel experiences and financial markets education, focused on meaningful journeys, practical learning and customer service.
             </p>
             <div className="mt-10 flex animate-rise flex-wrap justify-center gap-4 [animation-delay:360ms] lg:justify-start">
               <Link href="/tours" className="btn-lux">Explore journeys</Link>
               <Link href="/contact" className="btn-lux-outline">Talk to an expert</Link>
-            </div>
-            <div className="mt-12 flex animate-rise justify-center gap-10 border-t border-white/[0.08] pt-8 [animation-delay:480ms] lg:justify-start">
-              <div><div className="text-gold-grad font-serif text-4xl"><CountUp to={packages.length || 6} /></div><div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/45">Signature trips</div></div>
-              <div><div className="text-gold-grad font-serif text-4xl"><CountUp to={90} /></div><div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/45">Day validity</div></div>
-              <div><div className="text-gold-grad font-serif text-4xl"><CountUp to={5} suffix="★" /></div><div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/45">Luxury stays</div></div>
             </div>
           </div>
           <div className="animate-rise [animation-delay:300ms]">
@@ -130,7 +124,7 @@ export default async function Home() {
           </blockquote>
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             <div className="lux-card p-5"><div className="font-semibold text-white">Global destination network</div><p className="mt-1 text-sm text-white/55">Handpicked properties & bespoke itineraries.</p></div>
-            <div className="lux-card p-5"><div className="font-semibold text-white">End-to-end care</div><p className="mt-1 text-sm text-white/55">From first enquiry to safe return home.</p></div>
+            <div className="lux-card p-5"><div className="font-semibold text-white">End-to-end care</div><p className="mt-1 text-sm text-white/55">From initial enquiry to booking assistance.</p></div>
           </div>
           <Link href="/about" className="btn-lux mt-10">Our story</Link>
         </Reveal>
@@ -177,7 +171,7 @@ export default async function Home() {
             ))}
           </div>
           {!packages.length && <p className="mt-10 text-white/50">Packages are loading. Please check back shortly.</p>}
-          <p className="mt-8 text-center text-xs text-white/35">Prices are per person, excluding service charges. Hotels, dates and itinerary are confirmed in writing before booking.</p>
+          <p className="mt-8 text-center text-xs text-white/35">Travel packages are subject to availability. Package details, inclusions and booking conditions are provided upon enquiry.</p>
         </div>
       </section>
 
@@ -216,14 +210,14 @@ export default async function Home() {
         <div className="container-x grid gap-14 lg:grid-cols-2">
           <Reveal>
             <span className="chip">Purpose & wellbeing</span>
-            <h2 className="lux-title mt-5">Travel is an <span className="text-gold-grad italic">investment</span> in yourself</h2>
-            <p className="lux-sub mt-6">In health, in mindset and in memories that no market can price.</p>
+            <h2 className="lux-title mt-5">Travel is an <span className="text-gold-grad italic">Experience</span> Worth Remembering</h2>
+            <p className="lux-sub mt-6">Discover new destinations, experience different cultures and create lasting memories.</p>
             <p className="mt-10 font-serif text-2xl italic leading-snug text-champagne">&ldquo;The world is a book, and those who do not travel read only one page.&rdquo;</p>
             <p className="mt-2 text-sm text-white/40">Saint Augustine</p>
           </Reveal>
           <div className="grid gap-5 sm:grid-cols-2">
             {[
-              ["Mental & physical vitality", "Lower stress, restore emotional balance and return recharged."],
+              ["Mental & physical vitality", "Enjoy new surroundings and refreshing travel experiences."],
               ["Creativity & perspective", "New cultures spark fresh thinking and better problem-solving."],
               ["Shared memories", "Journeys together build bonds and lifelong family milestones."],
               ["Renewed purpose", "Stepping out of routine helps you rediscover what matters."],
@@ -248,12 +242,7 @@ export default async function Home() {
               <Reveal variant="left">
                 <span className="chip">World Vista Academy</span>
                 <h2 className="lux-title mt-5">Financial Markets <span className="text-gold-grad italic">Education</span></h2>
-                <p className="lux-sub mt-5">{course.syllabus}. Understand market structure, risk management and trading psychology, step by step.</p>
-                <div className="mt-8 grid grid-cols-3 gap-4 border-y border-white/[0.08] py-6">
-                  <div><div className="text-gold-grad font-serif text-3xl">{money(course.tuition, course.currency)}</div><div className="mt-1 text-xs uppercase tracking-wider text-white/45">Tuition</div></div>
-                  <div><div className="font-serif text-3xl text-white">{course.duration}</div><div className="mt-1 text-xs uppercase tracking-wider text-white/45">Duration</div></div>
-                  <div><div className="font-serif text-3xl text-white">{course.schedule}</div><div className="mt-1 text-xs uppercase tracking-wider text-white/45">Schedule</div></div>
-                </div>
+                <p className="lux-sub mt-5">Learn financial market fundamentals, technical analysis, market structure, risk management and trading psychology through structured educational content.</p>
                 <p className="mt-5 text-xs italic text-white/40">{course.disclaimer}</p>
                 <Link href="/education" className="btn-lux mt-8">View the course</Link>
               </Reveal>

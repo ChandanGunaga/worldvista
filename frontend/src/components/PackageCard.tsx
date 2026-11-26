@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { money } from "@/lib/api";
 import type { TourPackage } from "@/lib/types";
 
 export function PackageCard({ p }: { p: TourPackage }) {
@@ -17,15 +16,9 @@ export function PackageCard({ p }: { p: TourPackage }) {
         <span className="absolute bottom-4 left-5 text-[11px] font-bold uppercase tracking-[0.2em] text-gold-300">{p.tag ?? p.hotelCategory}</span>
       </div>
       <div className="flex flex-1 flex-col p-6 pt-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="font-serif text-2xl text-white">{p.name}</h3>
-            <div className="mt-1 text-sm text-white/50">{p.nights} Nights · {p.days} Days</div>
-          </div>
-          <div className="text-right">
-            <div className="text-gold-grad font-serif text-2xl font-semibold">{money(p.price, p.currency)}</div>
-            <div className="text-[11px] text-white/40">{p.chargeNote}</div>
-          </div>
+        <div>
+          <h3 className="font-serif text-2xl text-white">{p.name}</h3>
+          <div className="mt-1 text-sm text-white/50">{p.nights} Nights · {p.days} Days</div>
         </div>
         <p className="mt-4 flex-1 text-sm leading-relaxed text-white/60">{p.summary}</p>
         <div className="mt-5 flex items-center justify-between border-t border-white/[0.07] pt-4">

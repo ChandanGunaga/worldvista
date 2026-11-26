@@ -58,12 +58,14 @@ app.listen(env.port, () => {
   console.log("Integrations:", Object.entries(features).map(([k, v]) => `${k}=${v ? "on" : "off"}`).join(" "));
 });
 
-// Weekly binary close: runs hourly; closes any finished week exactly once (idempotent).
-setInterval(async () => {
+// Weekly binary close: on startup (free hosts sleep/restart) and hourly; each finished week closes exactly once.
+async function autoClose() {
   try {
     const s = await getSettings();
     if (s.enabled && s.autoCloseWeeks) await closeDueWeeks(null);
   } catch (e) {
     console.error("Binary week close failed", e);
   }
-}, 60 * 60 * 1000).unref();
+}
+setTimeout(autoClose, 15_000).unref();
+setInterval(autoClose, 60 * 60 * 1000).unref();

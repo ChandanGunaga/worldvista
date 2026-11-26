@@ -18,7 +18,6 @@ const POLICIES = [
   { href: "/legal/privacy", label: "Privacy Policy" },
   { href: "/legal/refund-policy", label: "Cancellation & Refunds" },
   { href: "/legal/disclaimer", label: "Disclaimer" },
-  { href: "/legal/grievance", label: "Grievance Redressal" },
 ];
 
 export async function SiteFooter() {
@@ -28,11 +27,9 @@ export async function SiteFooter() {
     <footer className="relative overflow-hidden border-t border-white/[0.06] bg-onyx-950 text-white/60">
       <div className="pointer-events-none absolute -left-40 top-0 h-[420px] w-[420px] rounded-full bg-gold-500/10 blur-[120px]" />
       <div className="container-x relative grid gap-12 py-20 lg:grid-cols-[1.1fr_1px_1.4fr]">
-        <div>
+        <div className="flex flex-col items-center justify-center text-center">
           <Image src="/images/logo-gold-t.png" alt="World Vista" width={900} height={439} className="h-28 w-auto" />
-          <p className="mt-6 font-serif text-2xl italic text-champagne">&ldquo;A More Meaningful Life&rdquo;</p>
-          <p className="mt-2 text-[11px] font-bold tracking-[0.32em] text-gold-300">TRAVEL • LEARN • EXPERIENCE</p>
-          <Link href="/register" className="btn-lux mt-8">Become a member</Link>
+          <p className="mt-4 font-serif text-2xl tracking-[0.3em] text-gold-grad">WORLD VISTA</p>
         </div>
         <div className="hidden bg-white/10 lg:block" />
         <div className="grid gap-10 sm:grid-cols-3">

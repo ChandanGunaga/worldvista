@@ -28,7 +28,7 @@ export default function Referral() {
       <PageHeader title="Referral Link & QR" subtitle="Invite friends and family to discover World Vista travel and learning." />
       <div className="lux-card-gold flex flex-wrap items-center gap-6 p-6">
         <div>
-          <div className="text-xs uppercase tracking-[0.2em] text-white/45">Your Member / referrer ID</div>
+          <div className="text-xs uppercase tracking-[0.2em] text-white/45">Your Member / Referral ID</div>
           <div className="mt-1 flex items-center gap-3"><span className="font-mono text-4xl tracking-wider text-gold-grad">{data.memberId}</span><CopyButton text={data.memberId} /></div>
         </div>
         <div className="ml-auto"><QR text={general} label="Referral" /></div>

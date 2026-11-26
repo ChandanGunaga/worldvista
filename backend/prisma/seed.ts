@@ -15,11 +15,11 @@ const packages = [
     summary: "Sultan Qaboos Grand Mosque, Muscat royal waterfront, Wahiba Sands desert safaris, and Arabian Gulf fjords." },
   { slug: "malaysia", name: "Malaysia", destination: "Malaysia", price: 500, chargeNote: "+ service charge", nights: 3, days: 4, hotelCategory: "4 & 5-Star Luxury", tag: "4 & 5-Star Luxury",
     summary: "Iconic Kuala Lumpur Petronas Towers, Batu Caves shrines, Genting Highlands, and Langkawi island beaches." },
-  { slug: "dubai-elite", name: "Dubai Elite", destination: "United Arab Emirates", price: 500, chargeNote: "+ charge", nights: 4, days: 5, hotelCategory: "Luxury", tag: "Flagship Luxury",
+  { slug: "dubai-elite", name: "Dubai", destination: "United Arab Emirates", price: 500, chargeNote: "+ charge", nights: 4, days: 5, hotelCategory: "Luxury", tag: "Flagship Luxury",
     summary: "Palm Jumeirah luxury beachfront cabanas, private desert dune safaris, and Arabian Gulf yacht cruises." },
   { slug: "thailand", name: "Thailand", destination: "Thailand", price: 300, chargeNote: "+ charge", nights: 3, days: 4, hotelCategory: "Beach resort", tag: "Island Escape",
     summary: "Emerald island lagoons, private beach cabana villas, coral reef snorkelling, and vibrant culinary night markets." },
-  { slug: "domestic-tours", name: "Domestic Tours", destination: "India", price: 120, chargeNote: "+ charge", nights: 2, days: 3, hotelCategory: "Heritage hotels", tag: "Heritage & Alpine",
+  { slug: "domestic-tours", name: "India Tours", destination: "India", price: 120, chargeNote: "+ charge", nights: 2, days: 3, hotelCategory: "Heritage hotels", tag: "Heritage & Alpine",
     summary: "Manali pine valleys, Gulmarg snow gondolas, Jaipur Pink City royal havelis, and sunny Goa coastal beaches." },
 ];
 
